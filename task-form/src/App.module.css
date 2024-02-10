@@ -1,8 +1,13 @@
+body {
+	background-color: #808080;
+}
+
 .app {
 	text-align: center;
 }
 
 .form {
+	background-color: white;
 	display: flex;
 	flex-direction: column;
 	width: 350px;
@@ -33,4 +38,8 @@
 
 .errorLabel {
 	color: red;
+}
+
+.btn:focus {
+	background-color: aquamarine;
 }

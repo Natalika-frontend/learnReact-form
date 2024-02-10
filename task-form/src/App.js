@@ -1,3 +1,4 @@
+import { useStore} from "./hooks/useStore";
 import { useRef, useState } from 'react';
 import styles from './App.module.css';
 
@@ -5,60 +6,69 @@ const sendFormData = (formData) => {
 	console.log(formData);
 };
 export const App = () => {
-	const [email, setEmail] = useState('');
-	const [password, setPassword] = useState('');
-	const [repeatPassword, setRepeatPassword] = useState('');
+	const { getState, updateState, resetState} = useStore();
+
 	const [emailError, setEmailError] = useState(null);
 	const [passwordError, setPasswordError] = useState(null);
 	const submitButtonRef = useRef(null);
 
-	const onEmailChange = ({target}) => {
-		setEmail(target.value);
-		let newError = null;
-		if (!/^[A-Z0-9._%+-]+@[A-Z0-9-]+.+.[A-Z]{2,4}$/i.test(target.value)) {
-			newError = 'Неверный email. Введите адрес электронной почты в формате: address@mail.ru';
-		}
-		setEmailError(newError);
-	};
 
 	const onPasswordChange = ({target}) => {
-		setPassword(target.value);
+		updateState('password', target.value);
 		let newError = null;
-		if (target.value.length < 3) {
-			newError = 'Некорректный пароль. Пароль должен быть длиной не менее 3 знаков';
-		} else if (target.value.length > 8) {
+		if (target.value.length > 8) {
 			newError = 'Некорректный пароль. Пароль должен быть длиной не более 8 знаков';
 		}
 		setPasswordError(newError);
 	};
 
-	const onRepeatPasswordChange = ({target}) => {
-		setRepeatPassword(target.value);
-		let newError = null;
-		if (password !== target.value) {
-			newError = 'Пароли не совпадают!!!';
-		}
-		setPasswordError(newError)
-	};
-
 	const onEmailBlur = ({target}) => {
-		if (!/^[A-Z0-9._%+-]+@[A-Z0-9-]+.+.[A-Z]{2,4}$/i.test(target.value)) {
+		if (target.value.trim() === '') {
+			setEmailError('Поле email не может быть пустым');
+		} else if (!/^[A-Z0-9._%+-]+@[A-Z0-9-]+\.[A-Z]{2,}$/i.test(target.value)) {
 			setEmailError('Неверный email. Введите адрес электронной почты в формате: address@mail.ru');
+		} else {
+			setEmailError(null);
 		}
 	};
 
 	const onPasswordBlur = ({target}) => {
 		if (target.value.length < 3) {
 			setPasswordError('Некорректный пароль. Пароль должен быть длиной не менее 3 знаков');
-		} else if (target.value.length > 8) {
-			setPasswordError('Некорректный пароль. Пароль должен быть длиной не более 8 знаков');
+		}
+	};
+
+	const onEmailChange = ({target}) => {
+		updateState('email', target.value);
+		if (emailError) {
+			setEmailError(null);
+		}
+	};
+
+	const onRepeatPasswordChange = ({target}) => {
+		updateState('repeatPassword', target.value);
+		let newError = null;
+		if (password !== target.value) {
+			newError = 'Пароли не совпадают!!!';
+		}
+		setPasswordError(newError);
+
+		if (!!emailError || !!passwordError) {
+			setTimeout(() => {
+				submitButtonRef.current.focus();
+			}, 0);
 		}
 	};
 
 	const onSubmit = (evt) => {
 		evt.preventDefault();
-		sendFormData({email, password, repeatPassword})
+		const { email, password, repeatPassword } = getState();
+		sendFormData({ email, password, repeatPassword });
+		resetState();
 	};
+
+	const { email, password, repeatPassword } = getState();
+	const isFormEmpty = email === '' || password === '' || repeatPassword === '';
 
 	return (
 		<div className={styles.app}>
@@ -95,7 +105,7 @@ export const App = () => {
 					onChange={onRepeatPasswordChange}
 				/>
 				<button className={styles.btn} ref={submitButtonRef} type="submit"
-						disabled={!!emailError || !!passwordError}>Зарегистрироваться
+						disabled={!!emailError || !!passwordError || isFormEmpty}>Зарегистрироваться
 				</button>
 			</form>
 		</div>
